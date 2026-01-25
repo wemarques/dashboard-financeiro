@@ -1,3 +1,36 @@
-streamlit
-pandas
-plotly
+# ===========================================
+# Dashboard Financeiro - Dependências
+# ===========================================
+
+# --- Framework Web ---
+streamlit==1.39.0
+streamlit-authenticator==0.3.2
+
+# --- IA / OCR ---
+mistralai==1.0.1
+
+# --- Dados e Análise ---
+pandas==2.2.0
+numpy==1.26.0
+scipy==1.13.0
+plotly==5.22.0
+
+# --- Machine Learning ---
+scikit-learn==1.5.0
+statsmodels==0.14.1
+
+# --- Banco de Dados ---
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+
+# --- Processamento de Arquivos ---
+Pillow==10.2.0
+pdf2image==1.17.0
+ofxparse==0.21
+
+# --- Segurança ---
+bcrypt==4.1.2
+python-dotenv==1.0.1
+
+# --- Utilitários ---
+pyyaml==6.0.1
