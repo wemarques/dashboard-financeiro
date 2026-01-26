@@ -25,7 +25,13 @@ DATABASE_URL = os.getenv(
 
 # === Mistral AI ===
 MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
-MISTRAL_MODEL = "pixtral-large-latest"  # Modelo multimodal para OCR
+
+# Modelos diferenciados para otimização de custo/performance
+MISTRAL_MODEL_SIMPLE = "pixtral-12b-latest"     # Para recibos simples (mais rápido e econômico)
+MISTRAL_MODEL_COMPLEX = "pixtral-large-latest"  # Para faturas e extratos complexos (mais preciso)
+
+# Alias para compatibilidade
+MISTRAL_MODEL = MISTRAL_MODEL_COMPLEX
 
 # === Horário de Risco (Proteção Noturna) ===
 NIGHT_START = os.getenv("NIGHT_START", "00:00")

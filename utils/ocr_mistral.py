@@ -22,11 +22,12 @@ except ImportError:
     convert_from_path = None
 
 try:
-    from config import MISTRAL_API_KEY, MISTRAL_MODEL
+    from config import MISTRAL_API_KEY, MISTRAL_MODEL_SIMPLE, MISTRAL_MODEL_COMPLEX
     from utils.logger import get_logger, log_ocr_result
 except ImportError:
     MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
-    MISTRAL_MODEL = "pixtral-large-latest"
+    MISTRAL_MODEL_SIMPLE = "pixtral-12b-latest"
+    MISTRAL_MODEL_COMPLEX = "pixtral-large-latest"
     from logger import get_logger, log_ocr_result
 
 logger = get_logger(__name__)
@@ -67,15 +68,26 @@ class OCRProcessor:
 
         return temp_paths
 
-    def _call_mistral_ocr(self, image_base64: str, prompt: str) -> Optional[Dict]:
-        """Faz chamada ao Mistral AI com imagem"""
+    def _call_mistral_ocr(self, image_base64: str, prompt: str, use_complex_model: bool = False) -> Optional[Dict]:
+        """
+        Faz chamada ao Mistral AI com imagem
+
+        Args:
+            image_base64: Imagem codificada em base64
+            prompt: Prompt para extração de dados
+            use_complex_model: Se True, usa modelo complexo (faturas/extratos).
+                              Se False, usa modelo simples (recibos).
+        """
         if not self.client:
             logger.error("Cliente Mistral não inicializado")
             return None
 
+        model = MISTRAL_MODEL_COMPLEX if use_complex_model else MISTRAL_MODEL_SIMPLE
+        logger.debug(f"Usando modelo Mistral: {model}")
+
         try:
             response = self.client.chat.complete(
-                model=MISTRAL_MODEL,
+                model=model,
                 messages=[{
                     "role": "user",
                     "content": [
@@ -141,7 +153,8 @@ class OCRProcessor:
 Se algum campo não estiver visível, use null. Retorne APENAS o JSON, sem explicações."""
 
         image_b64 = self._image_to_base64(image_path)
-        result = self._call_mistral_ocr(image_b64, prompt)
+        # Recibos simples usam modelo econômico
+        result = self._call_mistral_ocr(image_b64, prompt, use_complex_model=False)
 
         if result and "raw_text" not in result:
             log_ocr_result(logger, True, Path(image_path).name, len(result.get("itens", [])))
@@ -194,7 +207,8 @@ IMPORTANTE: Extraia TODAS as transações visíveis. Retorne APENAS o JSON."""
         for i, img_path in enumerate(image_paths):
             logger.debug(f"Processando página {i+1}/{len(image_paths)}")
             image_b64 = self._image_to_base64(img_path)
-            result = self._call_mistral_ocr(image_b64, prompt)
+            # Faturas de cartão usam modelo complexo para maior precisão
+            result = self._call_mistral_ocr(image_b64, prompt, use_complex_model=True)
 
             if result and "raw_text" not in result:
                 # Mesclar informações da fatura
@@ -276,7 +290,8 @@ IMPORTANTE: Valores de entrada são "credito", saídas são "debito". Retorne AP
         for i, img_path in enumerate(image_paths):
             logger.debug(f"Processando página {i+1}/{len(image_paths)}")
             image_b64 = self._image_to_base64(img_path)
-            result = self._call_mistral_ocr(image_b64, prompt)
+            # Extratos bancários usam modelo complexo para maior precisão
+            result = self._call_mistral_ocr(image_b64, prompt, use_complex_model=True)
 
             if result and "raw_text" not in result:
                 if not extrato_info:
